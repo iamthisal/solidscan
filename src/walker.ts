@@ -11,7 +11,30 @@ export const SUPPORTED_EXTENSIONS = new Set<string>([
 ]);
 
 /**
- * Recursively walks a directory and returns relative paths of all files matching supported extensions.
+ * Directories that should be excluded from recursive traversal.
+ *
+ * Rationale for exclusions:
+ * - 'node_modules', 'venv', '.venv': Third-party dependencies and virtual environments.
+ *   Scanning these would flood results with external library code rather than user source code.
+ * - '.git': Internal version control metadata and blobs, not application source.
+ * - 'dist', 'build', '.next': Compiled build outputs, bundles, and cached frameworks artifacts.
+ *   Analyzing generated artifacts leads to false positives and redundant warnings.
+ * - '__pycache__': Compiled Python bytecode files (*.pyc), not human-written code.
+ */
+export const EXCLUDED_DIRECTORIES = new Set<string>([
+  'node_modules',
+  '.git',
+  'dist',
+  'build',
+  '.next',
+  '__pycache__',
+  'venv',
+  '.venv',
+]);
+
+/**
+ * Recursively walks a directory and returns relative paths of all files matching supported extensions,
+ * ignoring common non-source directories (e.g. node_modules, dist, .git).
  *
  * @param rootDir The base directory to scan
  * @param currentRelativePath Current relative path from rootDir during recursion
@@ -26,17 +49,24 @@ export async function walkDirectory(
   const matchedFiles: string[] = [];
 
   for (const entry of entries) {
-    const relativePath = currentRelativePath
-      ? path.join(currentRelativePath, entry.name)
-      : entry.name;
-
     if (entry.isDirectory()) {
-      const subFiles = await walkDirectory(rootDir, relativePath);
+      // Skip irrelevant/vendor/build directories to keep scans fast and relevant
+      if (EXCLUDED_DIRECTORIES.has(entry.name)) {
+        continue;
+      }
+
+      const relativeSubDir = currentRelativePath
+        ? path.join(currentRelativePath, entry.name)
+        : entry.name;
+      const subFiles = await walkDirectory(rootDir, relativeSubDir);
       matchedFiles.push(...subFiles);
     } else if (entry.isFile()) {
       const ext = path.extname(entry.name);
       if (SUPPORTED_EXTENSIONS.has(ext)) {
-        matchedFiles.push(relativePath);
+        const relativeFilePath = currentRelativePath
+          ? path.join(currentRelativePath, entry.name)
+          : entry.name;
+        matchedFiles.push(relativeFilePath);
       }
     }
   }
