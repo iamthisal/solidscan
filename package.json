@@ -1,0 +1,8 @@
+{
+  "name": "solidscan",
+  "version": "0.1.0",
+  "description": "A CLI tool that scans AI-generated codebases for SOLID principle violations, code smells, and security risks",
+  "type": "module",
+  "main": "dist/index.js",
+  "license": "MIT"
+}
