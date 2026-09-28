@@ -4,5 +4,14 @@
   "description": "A CLI tool that scans AI-generated codebases for SOLID principle violations, code smells, and security risks",
   "type": "module",
   "main": "dist/index.js",
-  "license": "MIT"
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
 }
